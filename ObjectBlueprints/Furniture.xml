@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<objects>
+
+    <object Name="Laurus_TechInstallation" Inherits="SolidHighTechInstallation">
+        <stat Name="Hitpoints" Value="100" />
+        <stat Name="AV" Value="2" />
+    </object>
+
+    <object Name="Laurus_PlateRoller" Inherits="Laurus_TechInstallation">
+        <part Name="Render" DisplayName="plate roller" ColorString="&amp;r" TileColor="&amp;y" DetailColor="r" RenderString="226" Tile="Furniture/wire_extruder.bmp" />
+        <part Name="Description" Short="A contraption capable of rolling metal ingots into their flatter final form" />
+        <part Name="Physics" Weight="100" />
+        <part Name="Container" />
+        <part Name="Inventory" />
+        <tag Name="InventoryPopulationTable" Value="Laurus_PlateRoller" />
+        <tag Name="AutoexploreChest" />
+        <tag Name="ForceSmartUse" />
+        <stat Name="AV" Value="8" />
+        <stat Name="Hitpoints" Value="300" />
+        <tag Name="Tier" Value="4" />
+        <part Name="Examiner" Complexity="3" />
+        <part Name="HydraulicPowerTransmission" ChargeRate="1000" IsConsumer="true" DependsOnLiquid="" />
+        <part Name="ElectricalPowerTransmission" ChargeRate="1000" IsConsumer="true" />
+        <part Name="ItemConvertor" ChargeUse="200" ConversionTag="Laurus_PlateRollerOutput" GiganticFactor="5" Verb="strip" Preposition="into" UseChargeOnProcessing="true" NameForStatus="Rolling" />
+        <stag Name="Crafts" />
+        <stag Name="Power" />
+        <stag Name="DeepPower" />
+        <stag Name="SurfacePower" />
+        <stag Name="ElectricalPower" />
+        <stag Name="ElectricalPowerConsumer" />
+        <stag Name="DeepElectricalPowerConsumer" />
+        <stag Name="HydraulicPower" />
+        <stag Name="HydraulicPowerConsumer" />
+        <stag Name="DeepHydraulicPowerConsumer" />
+    </object>
+
+</objects>
