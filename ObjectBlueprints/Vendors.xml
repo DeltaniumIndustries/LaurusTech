@@ -1,0 +1,46 @@
+<objects>
+
+    <object Name="DromadTrader" Load="Merge">
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotSteel" Number="10-20" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateSteel" Number="10-20" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotSilver" Number="5-8" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateSilver" Number="5-8" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotGold" Number="2-4" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateGold" Number="2-4" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotLead" Number="10-20" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateLead" Number="10-20" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotBrass" Number="10-20" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateBrass" Number="10-20" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotNickel" Number="5-10" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateNickel" Number="5-10" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotTungsten" Number="2-4" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateTungsten" Number="2-4" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotPlastic" Number="15-30" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlatePlastic" Number="15-30" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotStainlessSteel" Number="10-15" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateStainlessSteel" Number="10-15" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotZinc" Number="10-15" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateZinc" Number="10-15" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotTitanium" Number="2-4" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateTitanium" Number="2-4" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotPlatinum" Number="1-2" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlatePlatinum" Number="1-2" />
+
+        <inventoryobject Blueprint="LaurusTradeGoodMetalIngotIridium" Number="1-2" />
+        <inventoryobject Blueprint="LaurusTradeGoodMetalPlateIridium" Number="1-2" />
+
+    </object>
+
+</objects>

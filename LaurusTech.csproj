@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyName>LaurusTech</AssemblyName>
-		<PackageId>net.freehold.llb</PackageId>
+		<PackageId>net.LunarLaurus.Tech</PackageId>
 		<Authors>LunarLaurus</Authors>
-		<TargetFramework>netstandard2.0</TargetFramework>
+		<TargetFramework>netstandard2.1</TargetFramework>
 		<LangVersion>9</LangVersion>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
@@ -11,6 +11,7 @@
 		<DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
 	</PropertyGroup>
 	<ItemGroup>
+		<ProjectReference Include="../LaurusCoreLib/LaurusCoreLib.csproj" />
 		<Reference Include="$(QudLibPath)/0Harmony.dll" />
 		<Reference Include="$(QudLibPath)/Accessibility.dll" />
 		<Reference Include="$(QudLibPath)/AiUnityCommon.dll" />
