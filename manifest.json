@@ -1,10 +1,10 @@
 {
 	"id": "LaurusTech",
 	"loadorder": 1,
-	"title": "Laurus Technological Industries",
+	"title": "{{metachrome|Laurus Technological Industries}",
 	"description": "Nothing to see here yet",
 	"tags": "gregtech",
 	"version": "1.0.0",
-	"author": "{{glotrot|LunarLaurus}}",
+	"author": "{{rainbow|LunarLaurus}}",
 	"previewImage": "preview.png"
 }
