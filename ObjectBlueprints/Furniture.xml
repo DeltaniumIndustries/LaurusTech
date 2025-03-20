@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <objects>
 
-    <object Name="Laurus_TechInstallation" Inherits="SolidHighTechInstallation">
-        <stat Name="Hitpoints" Value="100" />
-        <stat Name="AV" Value="2" />
-    </object>
-
-    <object Name="Laurus_PlateRoller" Inherits="Laurus_TechInstallation">
+    <object Name="LaurusTechPlateRoller" Inherits="SolidHighTechInstallation">
         <part Name="Render" DisplayName="plate roller" ColorString="&amp;r" TileColor="&amp;y" DetailColor="r" RenderString="226" Tile="Furniture/wire_extruder.bmp" />
         <part Name="Description" Short="A contraption capable of rolling metal ingots into their flatter final form" />
         <part Name="Physics" Weight="100" />
