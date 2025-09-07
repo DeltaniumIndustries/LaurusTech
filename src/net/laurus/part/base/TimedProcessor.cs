@@ -53,7 +53,7 @@ namespace LaurusTech.Net.Laurus.Machine
         {
             if (E.ID == "EndTurn" && IsReady())
             {
-                LL.Info("Firing End Turn Event", LogCategory.Info);
+                LL.Info("Firing End Turn Event", LogCategory.Debug);
                 if (CurrentItem != null)
                 {
                     LL.Info("Processing", LogCategory.Info);
@@ -62,9 +62,10 @@ namespace LaurusTech.Net.Laurus.Machine
                 else
                 {
                     // Look for a new job
-                    LL.Info("Finding new job", LogCategory.Info);
+                    LL.Info("Finding new job", LogCategory.Debug);
                     ForeachActivePartSubjectWhile(TryStartJob, true);
                 }
+                LL.Info("Fired End Turn Event", LogCategory.Debug);
             }
             return base.FireEvent(E);
         }
@@ -72,20 +73,23 @@ namespace LaurusTech.Net.Laurus.Machine
         private void ProcessTurn()
         {
             Progress++;
-            LL.Info("Progress++", LogCategory.Info);
+            if (Progress % 5 == 0)
+            {
+                LL.Info("Progress: " + Progress + "/" + RequiredTicks + "", LogCategory.Info);
+            }
             if (Progress >= RequiredTicks)
             {
-            LL.Info("Job done", LogCategory.Info);
+                LL.Info("Job done", LogCategory.Info);
                 var old = CurrentItem;
                 var newObj = old.ReplaceWith(CurrentOutput);
 
                 if (ChargeUse > 0)
                 {
-            LL.Info("Consuming Energy", LogCategory.Info);
+                    LL.Info("Consuming " + ChargeUse + " Energy", LogCategory.Info);
                     ParentObject.UseCharge(ChargeUse);
                 }
                 OnJobFinished(old, newObj);
-            LL.Info("Fired onJobFinished", LogCategory.Info);
+                LL.Info("Fired onJobFinished", LogCategory.Debug);
 
                 ResetJob();
             }
@@ -93,7 +97,7 @@ namespace LaurusTech.Net.Laurus.Machine
 
         private void ResetJob()
         {
-            LL.Info("Resetting Job", LogCategory.Info);
+            LL.Info("Resetting Job", LogCategory.Debug);
             CurrentItem = null;
             CurrentOutput = null;
             Progress = 0;
@@ -107,21 +111,21 @@ namespace LaurusTech.Net.Laurus.Machine
         /// </summary>
         protected bool TryStartJob(GameObject obj)
         {
-            LL.Info("Try start Job", LogCategory.Info);
+            LL.Info("Try start Job", LogCategory.Debug);
             if (GetJob(obj, out var output, out var ticks))
             {
-            LL.Info("Starting Job", LogCategory.Info);
+                LL.Info("Starting Job", LogCategory.Info);
                 CurrentItem = obj;
                 CurrentOutput = output;
                 RequiredTicks = ticks;
                 Progress = 0;
 
-            LL.Info("Firing onJobStarted", LogCategory.Info);
+                LL.Info("Firing onJobStarted", LogCategory.Info);
                 OnJobStarted(obj, output, ticks);
-            LL.Info("Fired onJobStarted", LogCategory.Info);
+                LL.Info("Fired onJobStarted", LogCategory.Info);
                 return false; // reserve this item
             }
-            LL.Info("Did not start Job", LogCategory.Info);
+            LL.Info("Did not start Job", LogCategory.Debug);
             return true; // keep looking
         }
 
