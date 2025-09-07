@@ -1,4 +1,5 @@
 using System;
+using LaurusTech.Net.Laurus.Machine;
 
 namespace XRL.World.Parts
 {

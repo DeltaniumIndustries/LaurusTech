@@ -1,4 +1,0 @@
-[
-  { "input": "RawOre", "output": "Ingot", "turns": 5 },
-  { "input": "RawMeat", "output": "CookedMeat", "turns": 3 }
-]

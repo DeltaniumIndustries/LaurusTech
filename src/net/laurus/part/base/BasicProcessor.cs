@@ -1,6 +1,7 @@
 using System;
+using XRL.World;
 
-namespace XRL.World.Parts
+namespace LaurusTech.Net.Laurus.Machine
 {
     /// <summary>
     /// Abstract processor with fixed-cycle, fixed-charge logic.

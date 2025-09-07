@@ -1,6 +1,11 @@
 using System;
+using LaurusCoreLib.Net.Laurus.Enums;
+using LaurusCoreLib.Net.Laurus.Logging;
+using XRL;
+using XRL.World;
+using XRL.World.Parts;
 
-namespace XRL.World.Parts
+namespace LaurusTech.Net.Laurus.Machine
 {
     [Serializable]
     public abstract class TimedProcessor : IPoweredPart
@@ -37,17 +42,27 @@ namespace XRL.World.Parts
             base.Register(Object, Registrar);
         }
 
+        protected void GameMessage(string msg)
+        {
+            Console.WriteLine(msg);
+            AddPlayerMessage(msg);
+            LL.Info(msg, LogCategory.Info);
+        }
+
         public override bool FireEvent(Event E)
         {
             if (E.ID == "EndTurn" && IsReady())
             {
+                LL.Info("Firing End Turn Event", LogCategory.Info);
                 if (CurrentItem != null)
                 {
+                    LL.Info("Processing", LogCategory.Info);
                     ProcessTurn();
                 }
                 else
                 {
                     // Look for a new job
+                    LL.Info("Finding new job", LogCategory.Info);
                     ForeachActivePartSubjectWhile(TryStartJob, true);
                 }
             }
@@ -57,15 +72,20 @@ namespace XRL.World.Parts
         private void ProcessTurn()
         {
             Progress++;
+            LL.Info("Progress++", LogCategory.Info);
             if (Progress >= RequiredTicks)
             {
+            LL.Info("Job done", LogCategory.Info);
                 var old = CurrentItem;
                 var newObj = old.ReplaceWith(CurrentOutput);
 
                 if (ChargeUse > 0)
+                {
+            LL.Info("Consuming Energy", LogCategory.Info);
                     ParentObject.UseCharge(ChargeUse);
-
+                }
                 OnJobFinished(old, newObj);
+            LL.Info("Fired onJobFinished", LogCategory.Info);
 
                 ResetJob();
             }
@@ -73,10 +93,12 @@ namespace XRL.World.Parts
 
         private void ResetJob()
         {
+            LL.Info("Resetting Job", LogCategory.Info);
             CurrentItem = null;
             CurrentOutput = null;
             Progress = 0;
             RequiredTicks = 0;
+            LL.Info("Job reset", LogCategory.Info);
         }
 
         /// <summary>
@@ -85,16 +107,21 @@ namespace XRL.World.Parts
         /// </summary>
         protected bool TryStartJob(GameObject obj)
         {
+            LL.Info("Try start Job", LogCategory.Info);
             if (GetJob(obj, out var output, out var ticks))
             {
+            LL.Info("Starting Job", LogCategory.Info);
                 CurrentItem = obj;
                 CurrentOutput = output;
                 RequiredTicks = ticks;
                 Progress = 0;
 
+            LL.Info("Firing onJobStarted", LogCategory.Info);
                 OnJobStarted(obj, output, ticks);
+            LL.Info("Fired onJobStarted", LogCategory.Info);
                 return false; // reserve this item
             }
+            LL.Info("Did not start Job", LogCategory.Info);
             return true; // keep looking
         }
 

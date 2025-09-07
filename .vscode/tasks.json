@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build & Run Qud Mod",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${fileWorkspaceFolder}"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile",
+      "dependsOn": ["Deploy Mod"]
+    },
+    {
+      "label": "Deploy Mod",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy", "Bypass",
+        "-File", "${workspaceFolder}/../deploy.ps1",
+        "-ProjectDir", "${fileWorkspaceFolder}"
+      ]
+    }
+  ]
+}

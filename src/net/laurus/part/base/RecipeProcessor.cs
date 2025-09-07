@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using LaurusTech.net.laurus.model;
 using LaurusTech.net.laurus.model.service;
+using XRL.World;
 
-namespace XRL.World.Parts
+namespace LaurusTech.Net.Laurus.Machine
 {
     /// <summary>
     /// A TimedProcessor that works from a list of recipes.
@@ -31,15 +32,18 @@ namespace XRL.World.Parts
 
         protected override bool GetJob(GameObject obj, out string output, out int ticks)
         {
+            LaurusCoreLib.Net.Laurus.Logging.LL.Info("Finding Job with params", LaurusCoreLib.Net.Laurus.Enums.LogCategory.Info);
             if (Recipes.TryGetValue(obj.Blueprint, out var recipe))
             {
                 output = recipe.Output;
                 ticks = recipe.Turns;
+                LaurusCoreLib.Net.Laurus.Logging.LL.Info("Found Job", LaurusCoreLib.Net.Laurus.Enums.LogCategory.Info);
                 return true;
             }
 
             output = null;
             ticks = 0;
+            LaurusCoreLib.Net.Laurus.Logging.LL.Info("No Job found", LaurusCoreLib.Net.Laurus.Enums.LogCategory.Info);
             return false;
         }
 
