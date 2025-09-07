@@ -1,32 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
 <objects>
-
-    <object Name="LaurusTechPlateRoller" Inherits="SolidHighTechInstallation">
-        <part Name="Render" DisplayName="plate roller" ColorString="&amp;r" TileColor="&amp;y" DetailColor="r" RenderString="226" Tile="Furniture/wire_extruder.bmp" />
-        <part Name="Description" Short="A contraption capable of rolling metal ingots into their flatter final form" />
-        <part Name="Physics" Weight="100" />
-        <part Name="Container" />
-        <part Name="Inventory" />
-        <tag Name="InventoryPopulationTable" Value="Laurus_PlateRoller" />
-        <tag Name="AutoexploreChest" />
-        <tag Name="ForceSmartUse" />
-        <stat Name="AV" Value="8" />
-        <stat Name="Hitpoints" Value="300" />
-        <tag Name="Tier" Value="4" />
-        <part Name="Examiner" Complexity="3" />
-        <part Name="HydraulicPowerTransmission" ChargeRate="1000" IsConsumer="true" DependsOnLiquid="" />
-        <part Name="ElectricalPowerTransmission" ChargeRate="1000" IsConsumer="true" />
-        <part Name="ItemConvertor" ChargeUse="200" ConversionTag="Laurus_PlateRollerOutput" GiganticFactor="5" Verb="strip" Preposition="into" UseChargeOnProcessing="true" NameForStatus="Rolling" />
-        <stag Name="Crafts" />
-        <stag Name="Power" />
-        <stag Name="DeepPower" />
-        <stag Name="SurfacePower" />
-        <stag Name="ElectricalPower" />
-        <stag Name="ElectricalPowerConsumer" />
-        <stag Name="DeepElectricalPowerConsumer" />
-        <stag Name="HydraulicPower" />
-        <stag Name="HydraulicPowerConsumer" />
-        <stag Name="DeepHydraulicPowerConsumer" />
-    </object>
-
+  <object Name="LaurusTechPlateRoller" Inherits="SolidHighTechInstallation">
+    <part
+      Name="Render"
+      DisplayName="plate roller"
+      ColorString="&amp;r"
+      TileColor="&amp;y"
+      DetailColor="r"
+      RenderString="226"
+      Tile="Furniture/wire_extruder.bmp"
+    />
+    <part
+      Name="Description"
+      Short="A contraption capable of rolling metal ingots into their flatter final form"
+    />
+    <part Name="Physics" Weight="100" />
+    <part Name="Container" />
+    <part Name="Inventory" />
+    <tag Name="InventoryPopulationTable" Value="Laurus_PlateRoller" />
+    <tag Name="AutoexploreChest" />
+    <tag Name="ForceSmartUse" />
+    <stat Name="AV" Value="8" />
+    <stat Name="Hitpoints" Value="300" />
+    <tag Name="Tier" Value="4" />
+    <part Name="Examiner" Complexity="3" />
+    <part
+      Name="HydraulicPowerTransmission"
+      ChargeRate="1000"
+      IsConsumer="true"
+      DependsOnLiquid=""
+    />
+    <part Name="ElectricalPowerTransmission" ChargeRate="1000" IsConsumer="true" />
+    <part
+      Name="ItemConvertor"
+      ChargeUse="200"
+      ConversionTag="Laurus_PlateRollerOutput"
+      GiganticFactor="5"
+      Verb="strip"
+      Preposition="into"
+      UseChargeOnProcessing="true"
+      NameForStatus="Rolling"
+    />
+    <stag Name="Crafts" />
+    <stag Name="Power" />
+    <stag Name="DeepPower" />
+    <stag Name="SurfacePower" />
+    <stag Name="ElectricalPower" />
+    <stag Name="ElectricalPowerConsumer" />
+    <stag Name="DeepElectricalPowerConsumer" />
+    <stag Name="HydraulicPower" />
+    <stag Name="HydraulicPowerConsumer" />
+    <stag Name="DeepHydraulicPowerConsumer" />
+  </object>
+  <object Name="LaurusTechBatteryCapacitor" Inherits="SolidHighTechInstallation">
+    <part
+      Name="Render"
+      DisplayName="battery capacitor"
+      ColorString="&amp;y"
+      DetailColor="w"
+      RenderString="15"
+      Tile="Items/sw_millstone_1.bmp"
+    />
+    <part Name="Physics" Weight="300" />
+    <part
+      Name="Description"
+      Short="Circles of limestone, porous and oyster-gray with the shells of old things, are arranged in vertical slabs and turned against each other to grind fibrous grains into flours."
+    />
+    <part
+      Name="Mill"
+      ChargeUse="1"
+      Transformations="Vinewafer,Lagroot Tuber,Mirror Shard,Psychal Gland,Voider Gland,Clump of Grave Moss,Compacted Bone Matter"
+      TagTransformations="BreatherGland"
+    />
+    <part
+      Name="AnimatedMaterialGeneric"
+      AnimationLength="300"
+      TileAnimationFrames="0=default,100=Items/sw_millstone_2.bmp,200=Items/sw_millstone_3.bmp"
+      RequiresOperationalActivePart="Mill"
+      ActivePartStatusIgnoreSubject="true"
+    />
+    <part
+      Name="Examiner"
+      Unknown="UnknownBizarreContraption"
+      Alternate="UnknownBizarreContraption"
+      Complexity="2"
+      Difficulty="1"
+    />
+    <part Name="TinkerItem" Bits="44" CanDisassemble="true" CanBuild="true" />
+    <part Name="Interesting" IfPartOperational="ElectricalPowerTransmission" Radius="1" />
+    <property Name="DontWarnOnOpen" Value="true" />
+    <part Name="Container" />
+    <part Name="Inventory" />
+    <stat Name="AV" Value="10" />
+    <stat Name="Hitpoints" Value="500" />
+    <tag Name="HeroNameTitleDescriptor" Value="Catholic,Potent,Replenisher,Restorer" />
+    <tag
+      Name="HeroNameTitleClientele"
+      Value="Energy Cells,the Depleted,the Laser-Brained,the Power-Hungry,Tinkers"
+    />
+    <tag Name="NamingTag" Value="Animated" />
+    <tag Name="BodyType" Value="RailedMechanism" />
+    <builder Name="Animated" ChanceOneIn="15000" />
+    <tag Name="Animatable" />
+    <tag Name="AnimatedSkills" Value="CookingAndGathering" />
+    <tag Name="DynamicObjectsTable:AnimatableFurniture" />
+    <tag Name="Class" Value="infrastructure" />
+    <tag Name="ForceRepaintSolid" />
+    <tag Name="Tier" Value="2" />
+    <part Name="ElectricalPowerTransmission" ChargeRate="1000" IsConsumer="true" />
+    <part Name="ChargeSink" ChargeUse="5" NameForStatus="ServoMotors" />
+    <part Name="UniversalCharger" ChargeRate="300" />
+    <part Name="PowerSwitch" SecurityClearance="1" />
+    <part Name="Container" Preposition="on" />
+    <part Name="Inventory" />
+    <part Name="Metal" />
+    <stag Name="Food" />
+    <stag Name="Power" />
+    <stag Name="DeepPower" />
+    <stag Name="SurfacePower" />
+    <stag Name="ElectricalPower" />
+    <stag Name="ElectricalPowerConsumer" />
+    <stag Name="DeepElectricalPowerConsumer" />
+    <stag Name="Contemporary" />
+    <stag Name="Charging" />
+  </object>
 </objects>
