@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
 using LaurusCoreLib.Net.Laurus.Enums;
 using LaurusCoreLib.Net.Laurus.Logging;
+using UnityEngine;
 using XRL;
+using XRL.UI;
 using XRL.World;
 using XRL.World.Parts;
+using GameObject = XRL.World.GameObject;
 
 namespace LaurusTech.Net.Laurus.Machine
 {
@@ -21,6 +25,13 @@ namespace LaurusTech.Net.Laurus.Machine
         private int RequiredTicks;
 
         /// <summary>
+        /// Queue of items to be processed by the machine.
+        /// Defaults to an empty list.
+        /// </summary>
+        public List<GameObject> InputQueue { get; set; } = new List<GameObject>();
+
+
+        /// <summary>
         /// Item being processed.
         /// </summary>
         protected GameObject CurrentItem;
@@ -30,6 +41,16 @@ namespace LaurusTech.Net.Laurus.Machine
         /// </summary>
         protected string CurrentOutput;
 
+        public string Preposition = "inside";
+        public string OpenSound = "Sounds/Interact/sfx_interact_open_genericContainer";
+
+        /// <summary>
+        /// Registry of menu actions (command → handler).
+        /// Populated from GetMenuActions().
+        /// </summary>
+        private readonly Dictionary<string, Func<InventoryActionEvent, bool>> MenuActions =
+            new(StringComparer.OrdinalIgnoreCase);
+
         protected TimedProcessor()
         {
             ChargeUse = GetChargeUse();
@@ -38,8 +59,12 @@ namespace LaurusTech.Net.Laurus.Machine
 
         public override void Register(GameObject Object, IEventRegistrar Registrar)
         {
-            Registrar.Register("EndTurn");
             base.Register(Object, Registrar);
+        }
+
+        public override bool WantEvent(int ID, int cascade)
+        {
+            return base.WantEvent(ID, cascade) || ID == EndTurnEvent.ID || ID == CanSmartUseEvent.ID || ID == CommandSmartUseEvent.ID || ID == GetInventoryActionsEvent.ID || ID == InventoryActionEvent.ID;
         }
 
         protected void GameMessage(string msg)
@@ -48,26 +73,115 @@ namespace LaurusTech.Net.Laurus.Machine
             AddPlayerMessage(msg);
             LL.Info(msg, LogCategory.Info);
         }
-
-        public override bool FireEvent(Event E)
+        public override bool HandleEvent(RadiatesHeatEvent E)
         {
-            if (E.ID == "EndTurn" && IsReady())
+            return GeneratesHeat() && base.HandleEvent(E);
+        }
+
+        public override bool HandleEvent(CanSmartUseEvent E)
+        {
+            //return !E.Actor.IsPlayer() && base.HandleEvent(E);
+            return false;
+        }
+        public override bool HandleEvent(CommandSmartUseEvent E)
+        {
+            if (RequiredTicks > 0)
             {
-                LL.Info("Firing End Turn Event", LogCategory.Debug);
-                if (CurrentItem != null)
+                // We are working, show menu
+            }
+            else
+            {
+                if (this.ParentObject.Inventory != null && this.ParentObject.Inventory.Count(CurrentOutput) > 0)
                 {
-                    LL.Info("Processing", LogCategory.Info);
-                    ProcessTurn();
+                    // Show Inventory, we have outputs
+                    AttemptOpen(E.Actor, E);
+                }
+
+                if (InputQueue.Count > 0)
+                {
+                    // We are processing multiple things
                 }
                 else
                 {
-                    // Look for a new job
-                    LL.Info("Finding new job", LogCategory.Debug);
-                    ForeachActivePartSubjectWhile(TryStartJob, true);
+
                 }
-                LL.Info("Fired End Turn Event", LogCategory.Debug);
             }
-            return base.FireEvent(E);
+            return base.HandleEvent(E);
+        }
+
+        /// <summary>
+        /// Handles the "EndTurn" event: processes current job or looks for a new one.
+        /// </summary>
+        public override bool HandleEvent(EndTurnEvent E)
+        {
+            if (!IsReady()) return base.HandleEvent(E);
+
+            LL.Info("Firing End Turn Event", LogCategory.Info);
+
+            if (CurrentItem != null)
+            {
+                LL.Info("Processing", LogCategory.Info);
+                ProcessTurn();
+            }
+            else
+            {
+                LL.Info("Finding new job", LogCategory.Info);
+                ForeachActivePartSubjectWhile(TryStartJob, true);
+            }
+
+            LL.Info("Fired End Turn Event", LogCategory.Info);
+            return base.HandleEvent(E);
+        }
+
+        /// <summary>
+        /// Handles the "GetInventoryActions" event: registers menu actions with the UI.
+        /// </summary>
+
+        public override bool HandleEvent(GetInventoryActionsEvent E)
+        {
+            E.AddAction("Check Output", "check output", "Check Output", Key: '2');
+            foreach (var action in GetMenuActions())
+            {
+                LL.Info($"Registering action: {action.Display}", LogCategory.Debug);
+                E.AddAction(
+                    action.Display,
+                    action.Verb,
+                    action.Command,
+                    action.Key,
+                    action.Default,
+                    WorksTelekinetically: action.WorksTelekinetically
+                );
+
+                if (action.Handler != null)
+                    MenuActions[action.Command] = action.Handler;
+            }
+
+            return base.HandleEvent(E);
+        }
+
+        /// <summary>
+        /// Handles the "InventoryAction" event: executes the corresponding menu action handler.
+        /// </summary>
+
+        public override bool HandleEvent(InventoryActionEvent E)
+        {
+            if (E == null || E.Command == null)
+            {
+                return base.HandleEvent(E);
+            }
+            if (E.Command == "Check Output")
+            {
+                AttemptOpen(E.Actor, E);
+            }
+            if (!MenuActions.TryGetValue(E.Command, out var handler))
+            {
+                return base.HandleEvent(E);
+            }
+
+            LL.Info($"Executing menu action: {E.Command}", LogCategory.Info);
+
+            // Wrap Event as InventoryActionEvent if needed by the handler
+            return handler?.Invoke(E) ?? false;
         }
 
         private void ProcessTurn()
@@ -98,23 +212,52 @@ namespace LaurusTech.Net.Laurus.Machine
         private void ResetJob()
         {
             LL.Info("Resetting Job", LogCategory.Debug);
-            CurrentItem = null;
             CurrentOutput = null;
             Progress = 0;
             RequiredTicks = 0;
+            CurrentItem = null;
+
+            // If there’s anything in the input queue, start the next job
+            if (InputQueue != null && InputQueue.Count > 0)
+            {
+                CurrentItem = InputQueue[0];
+                InputQueue.RemoveAt(0);
+
+                if (!TryStartJob(CurrentItem))
+                {
+                    LL.Info($"Started next job: {CurrentItem.DisplayNameOnlyDirect}", LogCategory.Info);
+                }
+                else
+                {
+                    LL.Info($"Failed to start queued job for: {CurrentItem.DisplayNameOnlyDirect}", LogCategory.Warning);
+                }
+            }
             LL.Info("Job reset", LogCategory.Info);
         }
 
         /// <summary>
-        /// Called each turn when no job is running.
-        /// Subclasses decide whether to start a job.
+        /// Called each turn when a job can be started or queued.
+        /// If a job is already running, the object is added to the input queue.
         /// </summary>
         protected bool TryStartJob(GameObject obj)
         {
-            LL.Info("Try start Job", LogCategory.Debug);
+            LL.Info("Attempting to start or queue job", LogCategory.Debug);
+
+            if (CurrentItem != null)
+            {
+                // Job is already in progress — enqueue the object for later processing
+                if (InputQueue == null)
+                    InputQueue = new List<GameObject>();
+
+                InputQueue.Add(obj);
+                LL.Info($"Job in progress. Queued {obj.DisplayNameOnlyDirect} for later. Queue Size: {InputQueue.Count}", LogCategory.Info);
+                return true; // still searching/queuing
+            }
+
+            // No job running — attempt to start immediately
             if (GetJob(obj, out var output, out var ticks))
             {
-                LL.Info("Starting Job", LogCategory.Info);
+                LL.Info($"Starting job for {obj.DisplayNameOnlyDirect}", LogCategory.Info);
                 CurrentItem = obj;
                 CurrentOutput = output;
                 RequiredTicks = ticks;
@@ -123,10 +266,195 @@ namespace LaurusTech.Net.Laurus.Machine
                 LL.Info("Firing onJobStarted", LogCategory.Info);
                 OnJobStarted(obj, output, ticks);
                 LL.Info("Fired onJobStarted", LogCategory.Info);
-                return false; // reserve this item
+                return false; // item reserved, stop searching
             }
-            LL.Info("Did not start Job", LogCategory.Debug);
+
+            LL.Info($"Did not start job for {obj.DisplayNameOnlyDirect}", LogCategory.Info);
             return true; // keep looking
+        }
+
+        public void AttemptOpen(GameObject actor, IEvent parentEvent = null)
+        {
+            VerifyParentInventory();
+
+            if (!ParentObject.IsValid() || !ParentObject.FireEvent("BeforeOpen"))
+                return;
+
+            ParentObject.FireEvent("Opening");
+            if (ParentObject.IsCreature)
+            {
+                //HandleCreatureOpen(actor);
+            }
+            else
+            {
+                HandleContainerOpen(actor, parentEvent);
+            }
+        }
+
+        /// <summary>Ensure parent inventory is verified and valid.</summary>
+        private void VerifyParentInventory()
+        {
+            ParentObject?.Inventory?.VerifyContents();
+        }
+
+        /// <summary>Handle opening of creatures (trading).</summary>
+        private void HandleCreatureOpen(GameObject actor)
+        {
+            if (!actor.IsPlayer())
+                return;
+
+            if (!actor.PhaseMatches(ParentObject) || ParentObject.HasPropertyOrTag("NoTrade") || ParentObject.HasPropertyOrTag("FugueCopy") || actor.DistanceTo(ParentObject) > 1)
+            {
+                Popup.ShowFail($"You cannot trade with {ParentObject.t()}.");
+                return;
+            }
+
+            PlayOpenSound();
+
+            if (ParentObject.IsPlayerLed())
+                TradeUI.ShowTradeScreen(ParentObject, 0.0f);
+            else if (ParentObject.IsPlayer())
+            {
+                Screens.CurrentScreen = 2;
+                Screens.Show(The.Player);
+            }
+            else
+                TradeUI.ShowTradeScreen(ParentObject);
+
+        }
+
+        /// <summary>Handle opening of containers (inventory items).</summary>
+        private void HandleContainerOpen(GameObject actor, IEvent parentEvent)
+        {
+            if (NeedsTrespassWarning(actor) && Popup.ShowYesNoCancel($"That is not owned by you. Are you sure you want to open it?") != DialogResult.Yes)
+                return;
+
+            SendTrespassEvent(actor);
+
+            if (!actor.IsPlayer())
+                return;
+
+            var inventory = ParentObject.Inventory;
+            if (inventory == null || inventory.GetObjectCount() == 0)
+            {
+                HandleEmptyContainer(actor, inventory);
+            }
+            else
+            {
+                HandleNonEmptyContainer(actor, parentEvent, inventory);
+            }
+
+            TryBackupStoredItems();
+        }
+
+
+        /// <summary>Check if a warning about trespassing is needed.</summary>
+        private bool NeedsTrespassWarning(GameObject actor)
+        {
+            return !ParentObject.HasTagOrProperty("DontWarnOnOpen") &&
+                   actor.IsPlayer() &&
+                   !string.IsNullOrEmpty(ParentObject.Owner) &&
+                   ParentObject.Equipped != ThePlayer &&
+                   ParentObject.InInventory != ThePlayer;
+        }
+
+        /// <summary>Send AI help broadcast for trespassing.</summary>
+        private void SendTrespassEvent(GameObject actor)
+        {
+            AIHelpBroadcastEvent.Send(ParentObject, actor, Cause: HelpCause.Trespass);
+        }
+
+        /// <summary>Handle opening an empty container.</summary>
+        private void HandleEmptyContainer(GameObject actor, Inventory inventory)
+        {
+            Popup.Show($"There's nothing {Preposition} that. Best way for processing to finish.");
+        }
+
+        /// <summary>Handle opening a container with items inside.</summary>
+        private void HandleNonEmptyContainer(GameObject actor, IEvent parentEvent, Inventory inventory)
+        {
+            var originalObjects = new List<GameObject>(inventory.GetObjectsDirect());
+            bool itemPicked = ShowPickerDialog(actor, inventory);
+
+            if (itemPicked && parentEvent != null)
+                parentEvent.RequestInterfaceExit();
+
+            CheckForNewItems(actor, inventory, originalObjects);
+        }
+
+        /// <summary>
+        /// Displays the PickItem dialog and returns true if the player picked an item.
+        /// </summary>
+        private bool ShowPickerDialog(GameObject actor, Inventory inventory)
+        {
+            bool itemPicked = false;
+
+            string title = $"{{{{W|{(Preposition == "in" ? "Opening" : "Examining")} {ParentObject.an(Stripped: true)}}}}}";
+
+            PlayOpenSound();
+
+            PickItem.ShowPicker(
+                inventory.GetObjects(),
+                ref itemPicked,
+                Style: PickItem.PickItemDialogStyle.GetItemDialog,
+                Actor: actor,
+                Container: ParentObject,
+                Title: title,
+                Regenerate: inventory.GetObjects,
+                NotePlayerOwned: false
+            );
+
+            return itemPicked;
+        }
+
+
+        /// <summary>Check for newly added items and send AI help for theft detection.</summary>
+        private void CheckForNewItems(GameObject actor, Inventory inventory, List<GameObject> originalObjects)
+        {
+            GameObject highestValueItem = null;
+            double totalValue = 0.0;
+            double highestValue = -1.0;
+
+            for (int i = 0; i < originalObjects.Count; i++)
+            {
+                var obj = originalObjects[i];
+                if (!inventory.Objects.Contains(obj) && ParentObject.IsOwned() && !obj.OwnedByPlayer)
+                {
+                    double valueEach = obj.ValueEach;
+                    totalValue += valueEach * obj.Count;
+
+                    if (valueEach > highestValue)
+                    {
+                        highestValue = valueEach;
+                        highestValueItem = obj;
+                    }
+                }
+            }
+
+            if (highestValueItem != null)
+            {
+                float magnitude = Mathf.Max(1f, (float)(totalValue / 20.0));
+                AIHelpBroadcastEvent.Send(ParentObject, actor, highestValueItem, Magnitude: magnitude, Cause: HelpCause.Theft);
+            }
+        }
+
+        /// <summary>Attempt to store a backup of player-stored items.</summary>
+        private void TryBackupStoredItems()
+        {
+            var inventory = ParentObject.Inventory;
+            bool hasStoredItems = inventory?.HasObjectDirect(x => x.HasIntProperty("StoredByPlayer")) ?? false;
+
+            if (hasStoredItems)
+                inventory.TryStoreBackup();
+        }
+
+
+        public void PlayOpenSound()
+        {
+            string Clip = this.OpenSound ?? (this.OpenSound = this.ParentObject.GetTagOrStringProperty("OpenSound"));
+            if (Clip.IsNullOrEmpty())
+                return;
+            this.PlayWorldSound(Clip);
         }
 
         /// <summary>
@@ -149,5 +477,14 @@ namespace LaurusTech.Net.Laurus.Machine
         /// How much charge per finished job.
         /// </summary>
         protected abstract int GetChargeUse();
+
+        /// <summary>
+        /// Provide the list of custom inventory actions this machine exposes.
+        /// </summary>
+        protected abstract IEnumerable<MenuActionDef> GetMenuActions();
+
+
+
+        protected abstract bool GeneratesHeat();
     }
 }

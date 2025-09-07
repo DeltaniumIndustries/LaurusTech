@@ -18,6 +18,8 @@ namespace LaurusTech.Net.Laurus.Machine
     {
         private readonly Dictionary<string, Recipe> Recipes = new(StringComparer.OrdinalIgnoreCase);
 
+        public IReadOnlyDictionary<string, Recipe> MachineRecipeMap => Recipes;
+
         protected RecipeProcessor()
         {
             LoadRecipes(GetRecipeFile());

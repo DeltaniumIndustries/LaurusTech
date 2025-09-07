@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using LaurusTech.net.laurus;
 using LaurusTech.Net.Laurus.Machine;
 using XRL.World.Parts;
 
@@ -29,6 +32,43 @@ namespace XRL.World.Parts
         protected override void OnJobFinished(GameObject input, GameObject output)
         {
             GameMessage($"Furnace finished smelting {input.Blueprint} -> {output.Blueprint}");
+        }
+
+        protected override IEnumerable<MenuActionDef> GetMenuActions()
+        {
+            return new List<MenuActionDef>
+                {
+                    new(
+                        display: "Load Furnace",
+                        verb: "load inputs",
+                        command: "LoadFurnace",
+                        key: "1",
+                        @default: '1',
+                        worksTelekinetically: false,
+                        handler: HandleLoadFurnaceAction
+                    )
+                };
+        }
+
+        private bool HandleLoadFurnaceAction(InventoryActionEvent e)
+        {
+            GameMessage("Loading Furnace");
+            var pickedInput = ItemPickerUtils.PickFromInventory(
+                e.Actor,
+                "Select Input",
+                go => this.MachineRecipeMap.Keys.Contains(go.Blueprint)
+            );
+            if (pickedInput != null)
+            {
+                e.Actor.Inventory.RemoveObject(pickedInput);
+                return TryStartJob(pickedInput);
+            }
+            return false;
+        }
+
+        protected override bool GeneratesHeat()
+        {
+            return true;
         }
     }
 }

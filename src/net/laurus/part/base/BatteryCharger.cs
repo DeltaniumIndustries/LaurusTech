@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using XRL.World;
 using XRL.World.Parts;
 
@@ -29,5 +30,14 @@ namespace LaurusTech.Net.Laurus.Machine
             return false;
         }
 
+        protected override bool GeneratesHeat()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override IEnumerable<MenuActionDef> GetMenuActions()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
