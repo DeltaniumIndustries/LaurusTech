@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LaurusTech.net.laurus;
 using LaurusTech.Net.Laurus.Machine;
-using XRL.World.Parts;
+using XRL.UI;
 
 
 namespace XRL.World.Parts
@@ -56,12 +56,24 @@ namespace XRL.World.Parts
             var pickedInput = ItemPickerUtils.PickFromInventory(
                 e.Actor,
                 "Select Input",
-                go => this.MachineRecipeMap.Keys.Contains(go.Blueprint)
+                go => MachineRecipeMap.Keys.Contains(go.Blueprint)
             );
             if (pickedInput != null)
             {
-                e.Actor.Inventory.RemoveObject(pickedInput);
-                return TryStartJob(pickedInput);
+                int? depositAmount = Popup.AskNumber("How many? (1-"+pickedInput.Count+")", Start: 1, Min: 1, Max: pickedInput.Count);
+                if (depositAmount != null)
+                {
+                    if (pickedInput.Count - depositAmount > 1)
+                {
+                    pickedInput.Count -= (int) depositAmount;
+                }
+                else
+                {
+                    e.Actor.Inventory.RemoveObject(pickedInput);
+                }
+                    return TryStartJob(pickedInput);
+                }
+                
             }
             return false;
         }
