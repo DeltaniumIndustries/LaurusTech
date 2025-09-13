@@ -57,6 +57,14 @@ namespace LaurusTech.Net.Laurus.Machine
             WorksOnInventory = true;
         }
 
+        /// <summary>
+        /// Sends a message to the player, logs to console and LL logs.
+        /// </summary>
+        public static void GameMessage(string msg, LogCategory category = LogCategory.Info)
+        {
+            MachineUtils.GameMessage(msg, category);
+        }
+
         public override void Register(GameObject Object, IEventRegistrar Registrar)
         {
             base.Register(Object, Registrar);
@@ -65,13 +73,6 @@ namespace LaurusTech.Net.Laurus.Machine
         public override bool WantEvent(int ID, int cascade)
         {
             return base.WantEvent(ID, cascade) || ID == EndTurnEvent.ID || ID == CanSmartUseEvent.ID || ID == CommandSmartUseEvent.ID || ID == GetInventoryActionsEvent.ID || ID == InventoryActionEvent.ID;
-        }
-
-        protected void GameMessage(string msg)
-        {
-            Console.WriteLine(msg);
-            AddPlayerMessage(msg);
-            LL.Info(msg, LogCategory.Info);
         }
         public override bool HandleEvent(RadiatesHeatEvent E)
         {
@@ -91,10 +92,10 @@ namespace LaurusTech.Net.Laurus.Machine
             }
             else
             {
-                if (this.ParentObject.Inventory != null && this.ParentObject.Inventory.Count(CurrentOutput) > 0)
+                if (ParentObject.Inventory != null && this.ParentObject.Inventory.Count(CurrentOutput) > 0)
                 {
                     // Show Inventory, we have outputs
-                    AttemptOpen(E.Actor, E);
+                    MachineUtils.AttemptOpen(this, E.Actor, E);
                 }
 
                 if (InputQueue.Count > 0)
@@ -171,7 +172,7 @@ namespace LaurusTech.Net.Laurus.Machine
             }
             if (E.Command == "Check Output")
             {
-                AttemptOpen(E.Actor, E);
+                MachineUtils.AttemptOpen(this, E.Actor, E);
             }
             if (!MenuActions.TryGetValue(E.Command, out var handler))
             {
@@ -271,191 +272,9 @@ namespace LaurusTech.Net.Laurus.Machine
 
             LL.Info($"Did not start job for {obj.DisplayNameOnlyDirect}", LogCategory.Info);
             return true; // keep looking
-        }
-
-        public void AttemptOpen(GameObject actor, IEvent parentEvent = null)
-        {
-            VerifyParentInventory();
-
-            if (!ParentObject.IsValid() || !ParentObject.FireEvent("BeforeOpen"))
-                return;
-
-            ParentObject.FireEvent("Opening");
-            if (ParentObject.IsCreature)
-            {
-                //HandleCreatureOpen(actor);
-            }
-            else
-            {
-                HandleContainerOpen(actor, parentEvent);
-            }
-        }
-
-        /// <summary>Ensure parent inventory is verified and valid.</summary>
-        private void VerifyParentInventory()
-        {
-            ParentObject?.Inventory?.VerifyContents();
-        }
-
-        /// <summary>Handle opening of creatures (trading).</summary>
-        private void HandleCreatureOpen(GameObject actor)
-        {
-            if (!actor.IsPlayer())
-                return;
-
-            if (!actor.PhaseMatches(ParentObject) || ParentObject.HasPropertyOrTag("NoTrade") || ParentObject.HasPropertyOrTag("FugueCopy") || actor.DistanceTo(ParentObject) > 1)
-            {
-                Popup.ShowFail($"You cannot trade with {ParentObject.t()}.");
-                return;
-            }
-
-            PlayOpenSound();
-
-            if (ParentObject.IsPlayerLed())
-                TradeUI.ShowTradeScreen(ParentObject, 0.0f);
-            else if (ParentObject.IsPlayer())
-            {
-                Screens.CurrentScreen = 2;
-                Screens.Show(The.Player);
-            }
-            else
-                TradeUI.ShowTradeScreen(ParentObject);
-
-        }
-
-        /// <summary>Handle opening of containers (inventory items).</summary>
-        private void HandleContainerOpen(GameObject actor, IEvent parentEvent)
-        {
-            if (NeedsTrespassWarning(actor) && Popup.ShowYesNoCancel($"That is not owned by you. Are you sure you want to open it?") != DialogResult.Yes)
-                return;
-
-            SendTrespassEvent(actor);
-
-            if (!actor.IsPlayer())
-                return;
-
-            var inventory = ParentObject.Inventory;
-            if (inventory == null || inventory.GetObjectCount() == 0)
-            {
-                HandleEmptyContainer(actor, inventory);
-            }
-            else
-            {
-                HandleNonEmptyContainer(actor, parentEvent, inventory);
-            }
-
-            TryBackupStoredItems();
-        }
+        }  
 
 
-        /// <summary>Check if a warning about trespassing is needed.</summary>
-        private bool NeedsTrespassWarning(GameObject actor)
-        {
-            return !ParentObject.HasTagOrProperty("DontWarnOnOpen") &&
-                   actor.IsPlayer() &&
-                   !string.IsNullOrEmpty(ParentObject.Owner) &&
-                   ParentObject.Equipped != ThePlayer &&
-                   ParentObject.InInventory != ThePlayer;
-        }
-
-        /// <summary>Send AI help broadcast for trespassing.</summary>
-        private void SendTrespassEvent(GameObject actor)
-        {
-            AIHelpBroadcastEvent.Send(ParentObject, actor, Cause: HelpCause.Trespass);
-        }
-
-        /// <summary>Handle opening an empty container.</summary>
-        private void HandleEmptyContainer(GameObject actor, Inventory inventory)
-        {
-            Popup.Show($"There's nothing {Preposition} that. Best way for processing to finish.");
-        }
-
-        /// <summary>Handle opening a container with items inside.</summary>
-        private void HandleNonEmptyContainer(GameObject actor, IEvent parentEvent, Inventory inventory)
-        {
-            var originalObjects = new List<GameObject>(inventory.GetObjectsDirect());
-            bool itemPicked = ShowPickerDialog(actor, inventory);
-
-            if (itemPicked && parentEvent != null)
-                parentEvent.RequestInterfaceExit();
-
-            CheckForNewItems(actor, inventory, originalObjects);
-        }
-
-        /// <summary>
-        /// Displays the PickItem dialog and returns true if the player picked an item.
-        /// </summary>
-        private bool ShowPickerDialog(GameObject actor, Inventory inventory)
-        {
-            bool itemPicked = false;
-
-            string title = $"{{{{W|{(Preposition == "in" ? "Opening" : "Examining")} {ParentObject.an(Stripped: true)}}}}}";
-
-            PlayOpenSound();
-
-            PickItem.ShowPicker(
-                inventory.GetObjects(),
-                ref itemPicked,
-                Style: PickItem.PickItemDialogStyle.GetItemDialog,
-                Actor: actor,
-                Container: ParentObject,
-                Title: title,
-                Regenerate: inventory.GetObjects,
-                NotePlayerOwned: false
-            );
-
-            return itemPicked;
-        }
-
-
-        /// <summary>Check for newly added items and send AI help for theft detection.</summary>
-        private void CheckForNewItems(GameObject actor, Inventory inventory, List<GameObject> originalObjects)
-        {
-            GameObject highestValueItem = null;
-            double totalValue = 0.0;
-            double highestValue = -1.0;
-
-            for (int i = 0; i < originalObjects.Count; i++)
-            {
-                var obj = originalObjects[i];
-                if (!inventory.Objects.Contains(obj) && ParentObject.IsOwned() && !obj.OwnedByPlayer)
-                {
-                    double valueEach = obj.ValueEach;
-                    totalValue += valueEach * obj.Count;
-
-                    if (valueEach > highestValue)
-                    {
-                        highestValue = valueEach;
-                        highestValueItem = obj;
-                    }
-                }
-            }
-
-            if (highestValueItem != null)
-            {
-                float magnitude = Mathf.Max(1f, (float)(totalValue / 20.0));
-                AIHelpBroadcastEvent.Send(ParentObject, actor, highestValueItem, Magnitude: magnitude, Cause: HelpCause.Theft);
-            }
-        }
-
-        /// <summary>Attempt to store a backup of player-stored items.</summary>
-        private void TryBackupStoredItems()
-        {
-            var inventory = ParentObject.Inventory;
-            bool hasStoredItems = inventory?.HasObjectDirect(x => x.HasIntProperty("StoredByPlayer")) ?? false;
-
-            if (hasStoredItems)
-                inventory.TryStoreBackup();
-        }
-
-
-        public void PlayOpenSound()
-        {
-            string Clip = this.OpenSound ?? (this.OpenSound = this.ParentObject.GetTagOrStringProperty("OpenSound"));
-            if (Clip.IsNullOrEmpty())
-                return;
-            this.PlayWorldSound(Clip);
-        }
 
         /// <summary>
         /// Subclasses provide job definition:
