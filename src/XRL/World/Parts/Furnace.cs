@@ -60,7 +60,7 @@ namespace XRL.World.Parts
             );
             if (pickedInput != null)
             {
-                int? depositAmount = Popup.AskNumber("How many?", Start: 1, Min: 1, Max: pickedInput.Count);
+                int? depositAmount = Popup.AskNumber("How many? (1-"+pickedInput.Count+")", Start: 1, Min: 1, Max: pickedInput.Count);
                 if (depositAmount != null)
                 {
                     if (pickedInput.Count - depositAmount > 1)
